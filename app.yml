@@ -1,5 +1,7 @@
 runtime: python37
-entrypoint: daphne --bind 0.0.0.0:$PORT --workers 1 --threads 8 --timeout 0 backend.asgi:application
+entrypoint: daphne -p $PORT backend.asgi:application
+network:
+  session_affinity: true
 
 handlers:
   - url: /static

@@ -9,6 +9,11 @@ services:
     working_dir: /backend
     environment:
       - CLOUDSDK_CONFIG=/creds
+  redis:
+    container_name: "redis-backend"
+    image: redis
+    ports:
+      - 6379:6379
 
 volumes:
   gcp-creds:

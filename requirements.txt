@@ -12,6 +12,7 @@ cycler==0.11.0
 daphne==4.0.0
 decorator==5.1.1
 Django==3.2.16
+firebase-admin==6.0.1
 fonttools==4.38.0
 gcloud==0.17.0
 googleapis-common-protos==1.57.0
@@ -38,12 +39,10 @@ pycparser==2.21
 pycryptodome==3.4.3
 pyOpenSSL==22.1.0
 pyparsing==3.0.9
-Pyrebase==3.0.27
 python-dateutil==2.8.2
 python-jwt==2.0.1
 pytz==2022.6
 redis==4.4.0
-requests==2.11.1
 requests-toolbelt==0.7.0
 rsa==4.9
 scipy==1.7.3

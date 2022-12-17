@@ -1,10 +1,12 @@
 import numpy as np
 from obspy.signal.trigger import recursive_sta_lta, trigger_onset
 from obspy import UTCDateTime
+from google.cloud import storage
+import time
 
 def normalizations(array):
-    # res = array/np.amax(np.abs(array))
-    res = array/100000
+    res = array/np.amax(np.abs(array))
+    # res = array/100000
     return res
 
 def array_to_str_limit_dec(array):
@@ -23,19 +25,20 @@ def get_Parrival(data1, data2, data3, sampling):
     Z_p = search_Parrival(data3, sampling)
 
     if len(E_p)== 0 and len(N_p) == 0 and len(Z_p) == 0:
-        return -1
+        return -1, None
     
     else:
-        lens = [E_p, N_p, Z_p]
+        lens = [(E_p, 'E'), (N_p, 'N'), (Z_p, 'Z')]
         r = []
         for i in lens:
-          if len(i) != 0:
-            r.append(i[0])
+          if len(i[0]) != 0:
+            r.append((i[0][0], i[1]))
         s = []
         for i in r:
-            if len(i) != 0:
-                s.append(i[0])
-        return(min(s))
+            if len(i[0]) != 0:
+                s.append((i[0][0], i[1]))
+        s.sort(key=lambda a:a[0])
+        return s[0][0], s[0][1]
       
 def search_Parrival(data, sampling):
   cft = recursive_sta_lta(data, int(2.5 * sampling), int(10. * sampling))
@@ -58,14 +61,12 @@ def s_add_starttime(e, n, z, data):
     l_enz.sort(key=lambda a:a[1])
     sample = data[0]['sampling_rate']
     
-    print(l_enz)
     l_diff = []
     l_diff.append((l_enz[2][0], int(np.around((l_enz[2][1] - l_enz[0][1])*sample))))
     l_diff.append((l_enz[1][0], int(np.around((l_enz[1][1] - l_enz[0][1])*sample))))
     l_diff.append((l_enz[0][0], 0))
     
     l_diff.sort()
-    print(l_diff)
     
     data_e = split(data[0]['data_interpolated'])
     data_n = split(data[1]['data_interpolated'])
@@ -96,7 +97,6 @@ def add_null_station(gmji, jagi, pwji):
           ('jagi', UTCDateTime(jagi[0].stats.starttime).timestamp, jagi[0].stats.sampling_rate, jagi[0].stats.channel, jagi[0].stats.starttime, gmji[0].stats.npts), 
           ('pwji', UTCDateTime(pwji[0].stats.starttime).timestamp, pwji[0].stats.sampling_rate, pwji[0].stats.channel, pwji[0].stats.starttime, gmji[0].stats.npts)]
   l_gjp = sorted(l_gjp, key= lambda a:a[1])
-  print(l_gjp)
   l_diff = []
   l_diff.append((l_gjp[2][0], int(np.around((l_gjp[2][1] - l_gjp[0][1]) * l_gjp[0][2])), l_gjp[2][3]))
   l_diff.append((l_gjp[1][0], int(np.around((l_gjp[1][1] - l_gjp[0][1]) * l_gjp[1][2])), l_gjp[1][3]))
@@ -104,7 +104,6 @@ def add_null_station(gmji, jagi, pwji):
   data_first = l_gjp[0][4]
   # npts_first = l_gjp[0][5]
   l_diff.sort()
-  print(l_diff)
 
   return l_diff, data_first
 
@@ -118,3 +117,34 @@ def letInterpolate(inp, new_len):
   delta = (len(inp)-1) / (new_len-1)
   outp = [interpolate(inp, i*delta) for i in range(new_len)]
   return outp
+
+def getime(func):
+    def func_wrapper(*args, **kwargs):
+        start_time = time.time()
+        func(*args, **kwargs)
+        print("function {} completed in - {} seconds".format(
+            func.__name__,
+            time.time()-start_time))
+    return func_wrapper
+  
+def upload_blob(bucket_name, source_file_name, destination_blob_name):
+    """Uploads a file to the bucket."""
+    # The ID of your GCS bucket
+    # bucket_name = "your-bucket-name"
+    # The path to your file to upload
+    # source_file_name = "local/path/to/file"
+    # The ID of your GCS object
+    # destination_blob_name = "storage-object-name"
+
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(destination_blob_name)
+
+    blob.upload_from_filename(source_file_name)
+
+    print(
+        f"File {source_file_name} uploaded to {destination_blob_name}."
+    )
+    
+def upload(file_name):
+      upload_blob('ta-eews_bucket-backend', file_name, file_name)

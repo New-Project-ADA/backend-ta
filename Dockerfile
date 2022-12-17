@@ -5,6 +5,7 @@ RUN apt-get update && \
     apt-get -y install gcc
 
 COPY ./requirements.txt /requirements.txt
+COPY ./app.yml /app.yml
 COPY ./ /backend
 WORKDIR /backend
 
@@ -20,4 +21,4 @@ ENV PYTHONUNBUFFERED 1
 USER django-user
 
 # Gunicorn as app server
-CMD exec daphne --bind 0.0.0.0:$PORT --workers 1 --threads 8 --timeout 0 backend.asgi:application
+CMD exec daphne -b 0.0.0.0 -p 8080 backend.asgi:application
