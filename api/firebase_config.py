@@ -10,8 +10,3 @@ firebase_admin.initialize_app(creds, {
 })
 
 dbs = db.reference('/mseed_data')
-
-# firebase= pyrebase.initialize_app(firebaseConfig)
-# authe = firebase.auth()
-# database= firebase.database()
-# user = authe.sign_in_with_email_and_password(email, password)

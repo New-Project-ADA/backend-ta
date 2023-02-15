@@ -19,6 +19,7 @@ def array_to_str_limit_dec(array):
             lst += '{:.10f}'.format(np.round_(i, 10)) + " "
     return lst
 
+"""Choose the first P arrival"""
 def get_Parrival(data1, data2, data3, sampling):
     E_p = search_Parrival(data1, sampling)
     N_p = search_Parrival(data2, sampling)
@@ -55,6 +56,7 @@ def split(strr):
         lst.append(float(i))
     return lst
 
+"""Function to add null so that the charts start at the same time"""
 def s_add_starttime(e, n, z, data):
     l_enz = [('e', e.timestamp), ('n', n.timestamp), ('z', z.timestamp)]
     l_enz.sort(key=lambda a:a[1])

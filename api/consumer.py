@@ -16,8 +16,8 @@ class GetGMJIConsumer(AsyncWebsocketConsumer):
           
           name = self.scope['url_route']['kwargs']['name']
           
+          # Test computational time
           file = ""
-          #testing
           start_time = time.time()
           
           file += 'name mseed = ' + name + '\n'
@@ -49,7 +49,8 @@ class GetGMJIConsumer(AsyncWebsocketConsumer):
           end_time = time.time()-start_time
           file += 'initial computation = ' + str(end_time) + '\n'
           print(end_time, ' gmji')
-          #endtest
+          #End of test
+          
           preds = None
           data_mtr = {
                   'long': None,
@@ -63,21 +64,20 @@ class GetGMJIConsumer(AsyncWebsocketConsumer):
             lst_json = []
             p = 0
             
+            # Start Picking P Arrival
             if i >= 30*sampling:
                   datas1 = lst[0][i-(30*sampling):i]
                   datas2 = lst[1][i-(30*sampling):i]
                   datas3 = lst[2][i-(30*sampling):i]
+                  
                   p = get_Parrival(datas1, datas2, datas3, sampling)
                   
                   if p != -1:
-                        if p != 749:
-                              p = 749
-                        # print(p)
-                        # print(i)
                         p += i - (30*sampling)
                   else:
                         p = 0
                         
+                  # Send the first P to frontend
                   if Ps == 0:
                         Ps = p
                   else:
@@ -110,6 +110,8 @@ class GetGMJIConsumer(AsyncWebsocketConsumer):
                               'x':j,
                               'data_prediction':data_mtr}
                         lst_json.append(json_)
+            
+            # Send Null Array to Frontend until 4 s (100 data points)
             else:
                   lstss = [None]*100
                   for j in range(100):
@@ -140,8 +142,8 @@ class GetJAGIConsumer(AsyncWebsocketConsumer):
           
           name = self.scope['url_route']['kwargs']['name']
           
+          # Test computation time
           file = ""
-          #testing
           start_time = time.time()
           
           file += 'name mseed = ' + name+ '\n'
@@ -174,7 +176,8 @@ class GetJAGIConsumer(AsyncWebsocketConsumer):
           end_time = time.time()-start_time
           file += 'initial computation = ' + str(end_time)+ '\n'
           print(end_time, ' jagi')
-          #end test
+          # End of test
+          
           preds = None
           data_mtr = {
                   'long': None,
@@ -188,19 +191,18 @@ class GetJAGIConsumer(AsyncWebsocketConsumer):
             lst_json = []
             p = 0
             
+            # Start Picking P Arrival
             if i >= 30*sampling:
                   datas1 = lst[0][i-(30*sampling):i]
                   datas2 = lst[1][i-(30*sampling):i]
                   datas3 = lst[2][i-(30*sampling):i]
                   p = get_Parrival(datas1, datas2, datas3, sampling)
                   if p != -1:
-                        if p != 749:
-                              p = 749
-
                         p += i - (30*sampling)
                   else:
                         p = 0
-                        
+                  
+                  # Send the first P to frontend
                   if Ps == 0:
                         Ps = p
                   else:
@@ -232,6 +234,8 @@ class GetJAGIConsumer(AsyncWebsocketConsumer):
                               'x':j,
                               'data_prediction':data_mtr}
                         lst_json.append(json_)
+                        
+            # Send Null Array to Frontend until 4 s (100 data points)
             else:
                   lstss = [None]*100
                   for j in range(100):
@@ -261,8 +265,8 @@ class GetPWJIConsumer(AsyncWebsocketConsumer):
           await self.accept()
           name = self.scope['url_route']['kwargs']['name']
           
+          # Testing computational time
           file = ""
-          #test
           start_time = time.time()
           
           file += 'name mseed = ' + name+ '\n'
@@ -295,7 +299,8 @@ class GetPWJIConsumer(AsyncWebsocketConsumer):
           end_time = time.time()-start_time
           file += 'initial computation = ' + str(end_time)+ '\n'
           print(end_time, ' pwji')
-          #endtest
+          # End of test
+          
           preds = None
           data_mtr = {
                   'long': None,
@@ -309,16 +314,13 @@ class GetPWJIConsumer(AsyncWebsocketConsumer):
             lst_json = []
             p = 0
             
+            # Start Picking P Arrival
             if i >= 30*sampling:
                   datas1 = lst[0][i-(30*sampling):i]
                   datas2 = lst[1][i-(30*sampling):i]
                   datas3 = lst[2][i-(30*sampling):i]
                   p = get_Parrival(datas1, datas2, datas3, sampling)
                   if p != -1:
-                        if p != 749:
-                              p = 749
-                        # print(p)
-                        # print(i)
                         p += i - (30*sampling)
                   else:
                         p = 0
@@ -353,6 +355,8 @@ class GetPWJIConsumer(AsyncWebsocketConsumer):
                               'x':j,
                               'data_prediction':data_mtr}
                         lst_json.append(json_)
+                        
+            # Send Null Array to Frontend until 4 s (100 data points)
             else:
                   lstss = [None]*100
                   for j in range(100):
