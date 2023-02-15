@@ -16,11 +16,11 @@ class GetGMJIConsumer(AsyncWebsocketConsumer):
           
           name = self.scope['url_route']['kwargs']['name']
           
-          file = open('monitor_gmji_'+name+'.txt', 'w+')
+          file = ""
           #testing
           start_time = time.time()
           
-          file.write('name mseed = ' + name + '\n')
+          file += 'name mseed = ' + name + '\n'
           
           lsts = get_GMJI_data_firebase(name)
           sampling = int(lsts[0]['sampling_rate'])
@@ -47,20 +47,27 @@ class GetGMJIConsumer(AsyncWebsocketConsumer):
           Ps = 0
           
           end_time = time.time()-start_time
-          file.write('initial computation = ' + str(end_time) + '\n')
+          file += 'initial computation = ' + str(end_time) + '\n'
           print(end_time, ' gmji')
           #endtest
+          preds = None
+          data_mtr = {
+                  'long': None,
+                  'lat': None,
+                  'magnitude': None,
+                  'time': None,
+                  'depth': None
+            }
           
           for i in range(smallest):
             lst_json = []
             p = 0
-            preds = None
             
             if i >= 30*sampling:
                   datas1 = lst[0][i-(30*sampling):i]
                   datas2 = lst[1][i-(30*sampling):i]
                   datas3 = lst[2][i-(30*sampling):i]
-                  p, sensor = get_Parrival(datas1, datas2, datas3, sampling)
+                  p = get_Parrival(datas1, datas2, datas3, sampling)
                   
                   if p != -1:
                         if p != 749:
@@ -75,7 +82,6 @@ class GetGMJIConsumer(AsyncWebsocketConsumer):
                         Ps = p
                   else:
                         if i >= Ps + 5*sampling:
-                              print(i)
                               if preds == None:
                                     start_pred = time.time()
                                     interpolate_data1 = letInterpolate(lst[0][i-5*sampling:i+5*sampling], 1000)
@@ -87,25 +93,15 @@ class GetGMJIConsumer(AsyncWebsocketConsumer):
                                           
                                     preds = endpoint.predict(instances=[list_data]).predictions
                                     end_pred = time.time()-start_pred
-                                    file.write('prediction time = ' + str(end_pred))
-                                    file.close()
-                                    upload('monitor_gmji_'+name+'.txt')
-                                    print(preds)                                          
-                                    break
-                  
-                  #   time = starttime_base + timedelta(microseconds=((1000*Ps)/sampling)*1000)
-                  #   str_p = "".join(("0" + str(time.minute))[-2:] + ":" + ("0" + str(time.second))[-2:])
-            data_mtr = {
-                  'latitude': None,
-                  'longitude': None,
-                  'depth': None,
-                  'magnitude': None,
-                  'time': None
-            }
+                                    file += 'prediction time = ' + str(end_pred)
+                                    
+                                    data_mtr = denormalization(preds[0])
+                                    print(preds)
             
             if i >= 100:
                   for j in range(i-100, i):
-                        json_ = {'E_data':lst[0][j],
+                        json_ = {'mseed_name':name,
+                              'E_data':lst[0][j],
                               'N_data':lst[1][j],
                               'Z_data':lst[2][j],
                               'p_Arrival': int(Ps),
@@ -117,7 +113,8 @@ class GetGMJIConsumer(AsyncWebsocketConsumer):
             else:
                   lstss = [None]*100
                   for j in range(100):
-                        json_ = {'E_data':lstss[j],
+                        json_ = {'mseed_name':name,
+                              'E_data':lstss[j],
                               'N_data':lstss[j],
                               'Z_data':lstss[j],
                               'p_Arrival': None,
@@ -127,8 +124,7 @@ class GetGMJIConsumer(AsyncWebsocketConsumer):
                               'data_prediction':data_mtr}
                         lst_json.append(json_)
             await self.send(json.dumps(lst_json))
-            # await sleep(s)
-            await sleep(0.0001)
+            await sleep(s)
           await self.close()
         except KeyboardInterrupt:
           await self.close()
@@ -144,11 +140,11 @@ class GetJAGIConsumer(AsyncWebsocketConsumer):
           
           name = self.scope['url_route']['kwargs']['name']
           
-          file = open('monitor_jagi_'+name+'.txt', 'w+')
+          file = ""
           #testing
           start_time = time.time()
           
-          file.write('name mseed = ' + name+ '\n')
+          file += 'name mseed = ' + name+ '\n'
           
           lsts = get_JAGI_data_firebase(name)
           sampling = int(lsts[0]['sampling_rate'])
@@ -176,9 +172,17 @@ class GetJAGIConsumer(AsyncWebsocketConsumer):
           Ps = 0
           
           end_time = time.time()-start_time
-          file.write('initial computation = ' + str(end_time)+ '\n')
+          file += 'initial computation = ' + str(end_time)+ '\n'
           print(end_time, ' jagi')
           #end test
+          preds = None
+          data_mtr = {
+                  'long': None,
+                  'lat': None,
+                  'magnitude': None,
+                  'time': None,
+                  'depth': None
+            }
           
           for i in range(smallest):
             lst_json = []
@@ -212,23 +216,14 @@ class GetJAGIConsumer(AsyncWebsocketConsumer):
                                           
                                     preds = endpoint.predict(instances=[list_data]).predictions
                                     end_pred = time.time()-start_pred
-                                    file.write('prediction time = ' + str(end_pred))
-                                    file.close()
-                                    upload('monitor_jagi_'+name+'.txt')
-                                    print(preds)                                          
-                                    break
-
-            data_mtr = {
-                  'latitude': None,
-                  'longitude': None,
-                  'depth': None,
-                  'magnitude': None,
-                  'time': None
-            }
+                                    file += 'prediction time = ' + str(end_pred)
+                                    data_mtr = denormalization(preds[0])
+                                    print(file)
             
             if i >= 100:
                   for j in range(i-100, i):
-                        json_ = {'E_data':lst[0][j],
+                        json_ = {'mseed_name':name,
+                              'E_data':lst[0][j],
                               'N_data':lst[1][j],
                               'Z_data':lst[2][j],
                               'p_Arrival': int(Ps),
@@ -240,7 +235,8 @@ class GetJAGIConsumer(AsyncWebsocketConsumer):
             else:
                   lstss = [None]*100
                   for j in range(100):
-                        json_ = {'E_data':lstss[j],
+                        json_ = {'mseed_name':name,
+                              'E_data':lstss[j],
                               'N_data':lstss[j],
                               'Z_data':lstss[j],
                               'p_Arrival': None,
@@ -250,8 +246,7 @@ class GetJAGIConsumer(AsyncWebsocketConsumer):
                               'data_prediction':data_mtr}
                         lst_json.append(json_)
             await self.send(json.dumps(lst_json))
-            # await sleep(s)
-            await sleep(0.0001)
+            await sleep(s)
           await self.close()
         except KeyboardInterrupt:
           await self.close()
@@ -264,14 +259,13 @@ class GetPWJIConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         try:
           await self.accept()
-          
           name = self.scope['url_route']['kwargs']['name']
           
-          file = open('monitor_pwji_'+name+'.txt', 'w+')
+          file = ""
           #test
           start_time = time.time()
           
-          file.write('name mseed = ' + name+ '\n')
+          file += 'name mseed = ' + name+ '\n'
           
           lsts = get_PWJI_data_firebase(name)
           sampling = int(lsts[0]['sampling_rate'])
@@ -299,9 +293,17 @@ class GetPWJIConsumer(AsyncWebsocketConsumer):
           Ps = 0
           
           end_time = time.time()-start_time
-          file.write('initial computation = ' + str(end_time)+ '\n')
+          file += 'initial computation = ' + str(end_time)+ '\n'
           print(end_time, ' pwji')
           #endtest
+          preds = None
+          data_mtr = {
+                  'long': None,
+                  'lat': None,
+                  'magnitude': None,
+                  'time': None,
+                  'depth': None
+            }            
           
           for i in range(smallest):
             lst_json = []
@@ -336,24 +338,13 @@ class GetPWJIConsumer(AsyncWebsocketConsumer):
                                           
                                     preds = endpoint.predict(instances=[list_data]).predictions
                                     end_pred = time.time()-start_pred
-                                    file.write('prediction time = ' + str(end_pred))
-                                    file.close()
-                                    upload('monitor_pwji_'+name+'.txt')
-                                    print(preds)                                          
-                                    break
-                  #   time = starttime_base + timedelta(microseconds=((1000*Ps)/sampling)*1000)
-                  #   str_p = "".join(("0" + str(time.minute))[-2:] + ":" + ("0" + str(time.second))[-2:])
-            data_mtr = {
-                  'latitude': None,
-                  'longitude': None,
-                  'depth': None,
-                  'magnitude': None,
-                  'time': None
-            }
+                                    file += 'prediction time = ' + str(end_pred)
+                                    data_mtr = denormalization(preds[0])
             
             if i >= 100:
                   for j in range(i-100, i):
-                        json_ = {'E_data':lst[0][j],
+                        json_ = {'mseed_name':name,
+                              'E_data':lst[0][j],
                               'N_data':lst[1][j],
                               'Z_data':lst[2][j],
                               'p_Arrival': int(Ps),
@@ -365,7 +356,8 @@ class GetPWJIConsumer(AsyncWebsocketConsumer):
             else:
                   lstss = [None]*100
                   for j in range(100):
-                        json_ = {'E_data':lstss[j],
+                        json_ = {'mseed_name':name,
+                              'E_data':lstss[j],
                               'N_data':lstss[j],
                               'Z_data':lstss[j],
                               'p_Arrival': None,
@@ -375,8 +367,7 @@ class GetPWJIConsumer(AsyncWebsocketConsumer):
                               'data_prediction':data_mtr}
                         lst_json.append(json_)
             await self.send(json.dumps(lst_json))
-            # await sleep(s)
-            await sleep(0.0001)
+            await sleep(s)
           await self.close()
         except KeyboardInterrupt:
           await self.close()

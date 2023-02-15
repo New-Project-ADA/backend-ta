@@ -25,20 +25,19 @@ def get_Parrival(data1, data2, data3, sampling):
     Z_p = search_Parrival(data3, sampling)
 
     if len(E_p)== 0 and len(N_p) == 0 and len(Z_p) == 0:
-        return -1, None
+        return -1
     
     else:
-        lens = [(E_p, 'E'), (N_p, 'N'), (Z_p, 'Z')]
+        lens = [E_p, N_p, Z_p]
         r = []
         for i in lens:
-          if len(i[0]) != 0:
-            r.append((i[0][0], i[1]))
+          if len(i) != 0:
+            r.append(i[0])
         s = []
         for i in r:
-            if len(i[0]) != 0:
-                s.append((i[0][0], i[1]))
-        s.sort(key=lambda a:a[0])
-        return s[0][0], s[0][1]
+            if len(i) != 0:
+                s.append(i[0])
+        return(min(s))
       
 def search_Parrival(data, sampling):
   cft = recursive_sta_lta(data, int(2.5 * sampling), int(10. * sampling))
@@ -74,15 +73,15 @@ def s_add_starttime(e, n, z, data):
     
     if l_diff[0][1] != 0:
       for i in range(l_diff[0][1]):
-        data_e.insert(0, 0)
+        data_e.insert(0, None)
         
     if l_diff[1][1] != 0:
       for i in range(l_diff[1][1]):
-        data_n.insert(0, 0)
+        data_n.insert(0, None)
         
     if l_diff[2][1] != 0:
       for i in range(l_diff[2][1]):
-        data_z.insert(0, 0)
+        data_z.insert(0, None)
     
     lst = [data_e, data_n, data_z]
     
@@ -127,7 +126,7 @@ def getime(func):
             time.time()-start_time))
     return func_wrapper
   
-def upload_blob(bucket_name, source_file_name, destination_blob_name):
+def upload_blob(bucket_name, data_str, destination_blob_name):
     """Uploads a file to the bucket."""
     # The ID of your GCS bucket
     # bucket_name = "your-bucket-name"
@@ -139,12 +138,30 @@ def upload_blob(bucket_name, source_file_name, destination_blob_name):
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(destination_blob_name)
-
-    blob.upload_from_filename(source_file_name)
+    blob.upload_from_string(data_str, content_type='text/plain')
 
     print(
-        f"File {source_file_name} uploaded to {destination_blob_name}."
+        f"File {data_str[:10]} uploaded to {destination_blob_name}."
     )
     
-def upload(file_name):
-      upload_blob('ta-eews_bucket-backend', file_name, file_name)
+def upload(data, file_name):
+      upload_blob('ta-eews_bucket-backend', data, file_name)
+      
+def denormalization(data):
+  max,min = {},{}
+  max['lat'] = -6.64264
+  min['lat'] = -11.5152
+  max['long'] = 115.033
+  min['long'] = 111.532
+  max['depth'] = 588.426
+  min['depth'] = 1.16
+  max['magnitude'] = 6.5
+  min['magnitude'] = 3.0
+  max['time'] = 74.122
+  min['time'] = 4.502
+  
+  # Denorm
+  dats = {}
+  for col in data:
+      dats[col] = data[col][0]*(max[col] - min[col])+min[col]
+  return dats
